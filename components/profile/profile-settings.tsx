@@ -50,15 +50,8 @@ export function ProfileSettings({ user }: { user: UserProps }) {
 
       // TODO: Update local state via API refetch or state management
 
-      // ✅ Trigger NextAuth session update
-      await session.user?.update({
-        user: {
-          name: res.data.user.fullName,
-          email: res.data.user.email,
-          location: res.data.user.location,
-          phoneNumber: res.data.user.phoneNumber,
-        },
-      });
+      // ✅ Trigger session update via refetch
+      await session.refetch();
 
       // ✅ Force router refresh to get updated session from server
       router.refresh();
