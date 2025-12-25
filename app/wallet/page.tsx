@@ -1,0 +1,71 @@
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import prisma from "@/lib/db";
+import { WalletPageClient } from "./client-wrapper";
+//import { WalletSync } from "@/hooks/wallet-sync";
+
+export default async function WalletPage() {
+  const session = await getSession();
+
+  if (!session?.user) {
+    redirect("/auth");
+  }
+
+  // Get or create wallet
+  let wallet = await prisma.wallet.findUnique({
+    where: { userId: session.user.id },
+    include: {
+      transactions: {
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      },
+    },
+  });
+
+  if (!wallet) {
+    wallet = await prisma.wallet.create({
+      data: { userId: session.user.id },
+      include: { transactions: true },
+    });
+  }
+
+  // Get user's baskets
+  const baskets = await prisma.basket.findMany({
+    where: { userId: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      goalAmount: true,
+      currentAmount: true,
+    },
+  });
+
+  // Serialize wallet data for client
+  const serializedWallet = {
+    balance: Number(wallet.balance),
+    totalDeposits: Number(wallet.totalDeposits),
+    totalSpent: Number(wallet.totalSpent),
+    transactions: wallet.transactions.map((t) => ({
+      id: t.id,
+      type: t.type,
+      amount: Number(t.amount),
+      description: t.description,
+      status: t.status,
+      createdAt: t.createdAt.toISOString(),
+      basketId: t.basketId,
+    })),
+  };
+
+  const serializedBaskets = baskets.map((b) => ({
+    id: b.id,
+    name: b.name,
+    goalAmount: Number(b.goalAmount),
+    currentAmount: Number(b.currentAmount),
+  }));
+
+  return (
+    <>
+      <WalletPageClient wallet={serializedWallet} baskets={serializedBaskets} />
+    </>
+  );
+}

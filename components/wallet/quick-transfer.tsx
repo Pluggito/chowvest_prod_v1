@@ -1,0 +1,156 @@
+"use client";
+
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import axios from "axios";
+
+interface Basket {
+  id: string;
+  name: string;
+  goalAmount: number;
+  currentAmount: number;
+}
+
+interface QuickTransferProps {
+  baskets: Basket[];
+  balance: number;
+}
+
+export function QuickTransfer({ baskets, balance }: QuickTransferProps) {
+  const [selectedBasket, setSelectedBasket] = useState("");
+  const [amount, setAmount] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const quickAmounts = [5000, 10000, 20000];
+
+  const handleTransfer = async () => {
+    if (!selectedBasket || !amount || parseFloat(amount) <= 0) {
+      toast.error("Please select a basket and enter a valid amount");
+      return;
+    }
+
+    if (parseFloat(amount) > balance) {
+      toast.error("Insufficient balance");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const res = await axios.post("/api/wallet/transfer", {
+        basketId: selectedBasket,
+        amount: parseFloat(amount),
+      });
+
+      if (res.data.success) {
+        toast.success("Transfer successful!");
+        setAmount("");
+        setSelectedBasket("");
+        // Refresh the page to show updated data
+        router.refresh();
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Transfer failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Card className="p-6">
+      <h3 className="text-xl font-semibold text-foreground mb-6">
+        Quick Transfer
+      </h3>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="goal">Transfer to Basket</Label>
+          <Select value={selectedBasket} onValueChange={setSelectedBasket}>
+            <SelectTrigger id="goal">
+              <SelectValue placeholder="Select a basket" />
+            </SelectTrigger>
+            <SelectContent>
+              {baskets.length === 0 ? (
+                <SelectItem value="none" disabled>
+                  No baskets available
+                </SelectItem>
+              ) : (
+                baskets.map((basket) => (
+                  <SelectItem key={basket.id} value={basket.id}>
+                    {basket.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="amount">Amount</Label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              ₦
+            </span>
+            <Input
+              id="amount"
+              type="number"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="pl-8"
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          {quickAmounts.map((amt) => (
+            <Button
+              key={amt}
+              variant="outline"
+              size="sm"
+              className="text-xs bg-transparent"
+              onClick={() => setAmount(amt.toString())}
+              disabled={isLoading}
+            >
+              ₦{amt / 1000}k
+            </Button>
+          ))}
+        </div>
+
+        <Button
+          className="w-full mt-4"
+          onClick={handleTransfer}
+          disabled={
+            isLoading || !selectedBasket || !amount || baskets.length === 0
+          }
+        >
+          {isLoading ? "Processing..." : "Transfer Now"}
+        </Button>
+
+        <div className="pt-4 border-t border-border">
+          <p className="text-xs text-muted-foreground text-center">
+            Available balance:{" "}
+            <span className="font-semibold text-foreground">
+              ₦{balance.toLocaleString()}
+            </span>
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}

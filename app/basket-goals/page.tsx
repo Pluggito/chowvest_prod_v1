@@ -1,0 +1,56 @@
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import prisma from "@/lib/db";
+import { Navigation } from "@/components/navigation";
+
+//import { BasketSync } from "@/hooks/basket-sync";
+
+import BasketGoalsClientWrapper from "./client-wrapper";
+
+export default async function BasketGoalsPage() {
+  const session = await getSession();
+
+  if (!session?.user) {
+    redirect("/auth");
+  }
+
+  const [baskets, wallet] = await Promise.all([
+    prisma.basket.findMany({
+      where: {
+        userId: session.user.id,
+        status: "ACTIVE",
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.wallet.findUnique({
+      where: { userId: session.user.id },
+    }),
+  ]);
+
+  const serializedBaskets = baskets.map((basket) => ({
+    id: basket.id,
+    name: basket.name,
+    commodityType: basket.commodityType,
+    image: basket.image,
+    goalAmount: Number(basket.goalAmount),
+    currentAmount: Number(basket.currentAmount),
+    description: basket.description,
+    targetDate: basket.targetDate?.toISOString() || null,
+    regularTopUp: Number(basket.regularTopUp || 0),
+    category: basket.category,
+    status: basket.status,
+    createdAt: basket.createdAt.toISOString(),
+  }));
+
+  const walletBalance = Number(wallet?.balance || 0);
+
+  return (
+    <>
+      <Navigation />
+      <BasketGoalsClientWrapper
+        serializedBaskets={serializedBaskets}
+        walletBalance={walletBalance}
+      />
+    </>
+  );
+}

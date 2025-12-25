@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🥗 Chowvest - Save Small, Eat Well
 
-## Getting Started
+Chowvest is a modern food security and savings platform designed to help users hedge against food inflation. By saving small amounts daily or weekly, users can lock in food prices and secure their future meals through progress-based "Chow Targets".
 
-First, run the development server:
+![Chowvest Dashboard Placeholder](https://img.shields.io/badge/Chowvest-Food%20Savings-green)
+![Next.js](https://img.shields.io/badge/Next.js-15.0-black)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-blue)
+![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS%204.0-38B2AC)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Core Features
+
+### 1. Digital Wallet System
+
+- **Instant Deposits**: Integrated with **Paystack** for secure card and bank transfer deposits.
+- **Real-time Balance**: Instant updates across the dashboard and wallet pages.
+- **Transaction Audit**: Detailed history of all deposits, transfers, and purchases with success/pending/failed status.
+
+### 2. My Chow Targets (Food Baskets)
+
+- **Goal-Oriented Savings**: Create personalized targets for specific food items (e.g., "50kg Bag of Rice").
+- **Progress Tracking**: Visual progress bars showing how close you are to your goal.
+- **Flexible Top-ups**: Transfer funds from your wallet to specific targets at any time.
+- **Delivery Requests**: Once a goal reaches 100%, users can request instant delivery of their food items.
+
+### 3. Smart Market
+
+- Browse and purchase food commodities at competitive market prices.
+- Integration between marketplace purchases and wallet balances.
+
+### 4. Custom Authentication
+
+- **JWT-Based**: Secure session management using JSON Web Tokens.
+- **Secure Cookies**: HttpOnly, Secure, and SameSite cookie policies.
+- **Profile Management**: Personalized user experience with customizable profiles and security settings.
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15+ (App Router), React 19, Tailwind CSS 4.0
+- **Backend**: Next.js API Routes (Edge-compatible where possible)
+- **Database**: PostgreSQL with **Prisma ORM**
+- **Payments**: Paystack API
+- **State Management**: Zustand
+- **UI Components**: Radix UI, Lucide React, Sonner (Toasts)
+- **Type Safety**: TypeScript
+
+## 📁 Project Structure
+
+```text
+├── app/                  # Next.js App Router (Pages & API)
+│   ├── api/              # Backend API endpoints (Auth, Wallet, Baskets)
+│   ├── wallet/           # Wallet management views
+│   ├── basket-goals/     # Food savings management
+│   ├── market/           # Food marketplace
+│   └── dashboard/        # Main user overview
+├── components/           # Reusable UI components
+│   ├── wallet/           # Wallet-specific components (Deposit, Transfer)
+│   ├── goals/            # Goal-specific components (Header, List, Card)
+│   └── ui/               # Base shadcn/ui components
+├── lib/                  # Shared utilities (DB, Auth, Payments, Audit)
+├── prisma/               # Database schema and migrations
+├── scripts/              # Maintenance and diagnostic scripts
+└── public/               # Static assets
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ⚙️ Getting Started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. Clone & Install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+git clone <repository-url>
+cd chowvest-prod
+pnpm install
+```
 
-## Learn More
+### 2. Environment Setup
 
-To learn more about Next.js, take a look at the following resources:
+Create a `.env` file in the root:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+DATABASE_URL="postgresql://..."
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Auth
+JWT_SECRET="your-secret"
 
-## Deploy on Vercel
+# Payments
+PAYSTACK_SECRET_KEY="sk_test_..."
+NEXT_PUBLIC_PAYSTACK_SECRET_KEY="pk_test_..."
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 3. Database Initialization
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+### 4. Start Development
+
+```bash
+pnpm dev
+```
+
+## 🔐 Security & Audit
+
+All financial actions (deposits, transfers, goal creation) are logged in the `AuditLog` table for compliance and security monitoring. The system includes rate-limiting and session-refresh logic to protect user accounts.
+
+## 🤝 Contributing
+
+For updates or feature requests, please refer to the internal documentation or contact the development lead.
+
+---
+
+Built with ❤️ by the Chowvest Team.
