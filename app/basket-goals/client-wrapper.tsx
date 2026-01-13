@@ -4,6 +4,7 @@ import { Target } from "lucide-react";
 import { CreateGoalCard } from "@/components/goals/create-goal-card";
 import { GoalsList } from "@/components/goals/goals-list";
 import { GoalsHeader } from "@/components/goals/goals-header";
+import { COMMODITIES } from "@/constants/commodities";
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
@@ -145,59 +146,72 @@ export default function BasketGoalsClientWrapper({
                 No completed goals yet. Keep saving!
               </div>
             ) : (
-              completedBaskets.map((basket) => (
-                <Card key={basket.id} className="p-4">
-                  <div className="flex gap-4">
-                    <Image
-                      src={basket.image || "/placeholder.svg"}
-                      alt={basket.name}
-                      width={80}
-                      height={80}
-                      className="w-20 h-20 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold text-lg">
-                            {basket.name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Completed on{" "}
-                            {basket.targetDate
-                              ? format(
-                                  new Date(basket.targetDate),
-                                  "MMM d, yyyy"
-                                )
-                              : "No date"}
-                          </p>
+              completedBaskets.map((basket) => {
+                // Resolve commodity details if SKU exists
+                const commodity = basket.commodityType
+                  ? COMMODITIES.find((c) => c.sku === basket.commodityType)
+                  : null;
+
+                const displayName = commodity
+                  ? `${commodity.name} (${commodity.size}${commodity.unit})`
+                  : basket.name;
+                const displayImage =
+                  commodity?.image || basket.image || "/placeholder.svg";
+
+                return (
+                  <Card key={basket.id} className="p-4">
+                    <div className="flex gap-4">
+                      <Image
+                        src={displayImage}
+                        alt={displayName}
+                        width={80}
+                        height={80}
+                        className="w-20 h-20 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="font-semibold text-lg">
+                              {displayName}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              Completed on{" "}
+                              {basket.targetDate
+                                ? format(
+                                    new Date(basket.targetDate),
+                                    "MMM d, yyyy"
+                                  )
+                                : "No date"}
+                            </p>
+                          </div>
+                          <Badge className="bg-green-500 hover:bg-green-600">
+                            100% Complete
+                          </Badge>
                         </div>
-                        <Badge className="bg-green-500 hover:bg-green-600">
-                          100% Complete
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Total Saved
-                          </p>
-                          <p className="text-lg font-bold text-green-600">
-                            ₦{basket.currentAmount.toLocaleString()}
-                          </p>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground">
+                              Total Saved
+                            </p>
+                            <p className="text-lg font-bold text-green-600">
+                              ₦{basket.currentAmount.toLocaleString()}
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              handleRequestDelivery(basket.id);
+                              setShowDeliveriesDialog(false);
+                            }}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            Request Delivery
+                          </Button>
                         </div>
-                        <Button
-                          onClick={() => {
-                            handleRequestDelivery(basket.id);
-                            setShowDeliveriesDialog(false);
-                          }}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          Request Delivery
-                        </Button>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))
+                  </Card>
+                );
+              })
             )}
           </div>
         </DialogContent>

@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/db";
 import { Navigation } from "@/components/navigation";
+import { BasketGoalsSkeleton } from "@/components/loaders/basket-goals-skeleton";
 
 //import { BasketSync } from "@/hooks/basket-sync";
 
@@ -47,10 +49,12 @@ export default async function BasketGoalsPage() {
   return (
     <>
       <Navigation />
-      <BasketGoalsClientWrapper
-        serializedBaskets={serializedBaskets}
-        walletBalance={walletBalance}
-      />
+      <Suspense fallback={<BasketGoalsSkeleton />}>
+        <BasketGoalsClientWrapper
+          serializedBaskets={serializedBaskets}
+          walletBalance={walletBalance}
+        />
+      </Suspense>
     </>
   );
 }

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
+import { COMMODITIES } from "@/constants/commodities";
 import axios from "axios";
 import {
   DropdownMenu,
@@ -49,6 +50,7 @@ interface GoalsListProps {
 export function GoalsList({ baskets, balance, onUpdate }: GoalsListProps) {
   const [selectedBasket, setSelectedBasket] = useState<string | null>(null);
   const [addFundsOpen, setAddFundsOpen] = useState(false);
+  const [goalToDelete, setGoalToDelete] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -57,6 +59,27 @@ export function GoalsList({ baskets, balance, onUpdate }: GoalsListProps) {
   const handleAddFunds = (basketId: string) => {
     setSelectedBasket(basketId);
     setAddFundsOpen(true);
+  };
+
+  const handleDeleteGoal = async () => {
+    if (!goalToDelete) return;
+
+    try {
+      setIsLoading(true);
+      await axios.delete(`/api/baskets/${goalToDelete}`);
+      toast.success("Goal deleted successfully");
+
+      if (onUpdate) {
+        onUpdate();
+      }
+      setGoalToDelete(null);
+    } catch (error: any) {
+      console.error(error);
+      const msg = error.response?.data?.error || "Failed to delete goal";
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRequestDelivery = async (basketId: string) => {
@@ -136,6 +159,18 @@ export function GoalsList({ baskets, balance, onUpdate }: GoalsListProps) {
           const progress = (goal.currentAmount / goal.goalAmount) * 100;
           const remaining = goal.goalAmount - goal.currentAmount;
 
+          // Resolve commodity details if SKU exists
+          const commodity = goal.commodityType
+            ? COMMODITIES.find((c) => c.sku === goal.commodityType)
+            : null;
+
+          const displayName = commodity
+            ? `${commodity.name} (${commodity.size}${commodity.unit})`
+            : goal.name;
+          const displayImage =
+            commodity?.image || goal.image || "/placeholder.svg";
+          const displayCategory = commodity?.category || goal.category;
+
           return (
             <Card
               key={goal.id}
@@ -146,8 +181,8 @@ export function GoalsList({ baskets, balance, onUpdate }: GoalsListProps) {
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="relative">
                   <Image
-                    src={goal.image || "/placeholder.svg"}
-                    alt={goal.name}
+                    src={displayImage}
+                    alt={displayName}
                     width={100}
                     height={100}
                     className="w-full md:w-32 h-32 rounded-xl object-cover bg-muted"
@@ -174,10 +209,10 @@ export function GoalsList({ baskets, balance, onUpdate }: GoalsListProps) {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-xl font-semibold text-foreground">
-                          {goal.name}
+                          {displayName}
                         </h3>
                         <Badge variant="secondary" className="text-xs">
-                          {goal.category}
+                          {displayCategory}
                         </Badge>
                         {progress >= 100 && (
                           <Badge className="text-xs bg-green-500 hover:bg-green-600">
@@ -203,9 +238,10 @@ export function GoalsList({ baskets, balance, onUpdate }: GoalsListProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Edit Goal</DropdownMenuItem>
-                        <DropdownMenuItem>Pause Goal</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                          onClick={() => setGoalToDelete(goal.id)}
+                        >
                           Delete Goal
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -264,6 +300,39 @@ export function GoalsList({ baskets, balance, onUpdate }: GoalsListProps) {
           );
         })}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={!!goalToDelete}
+        onOpenChange={(open) => !open && setGoalToDelete(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Goal</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this goal? This action cannot be
+              undone.
+              {/* Note: In our API, we only allow deleting if funds are 0, so no fear of losing money here, but good to be explicit */}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setGoalToDelete(null)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteGoal}
+              disabled={isLoading}
+            >
+              {isLoading ? "Deleting..." : "Delete Goal"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Add Funds Dialog */}
       <Dialog open={addFundsOpen} onOpenChange={setAddFundsOpen}>

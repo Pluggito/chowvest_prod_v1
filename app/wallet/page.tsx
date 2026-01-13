@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/db";
 import { WalletPageClient } from "./client-wrapper";
+import { WalletSkeleton } from "@/components/loaders/wallet-skeleton";
 //import { WalletSync } from "@/hooks/wallet-sync";
 
 export default async function WalletPage() {
@@ -64,8 +66,8 @@ export default async function WalletPage() {
   }));
 
   return (
-    <>
+    <Suspense fallback={<WalletSkeleton />}>
       <WalletPageClient wallet={serializedWallet} baskets={serializedBaskets} />
-    </>
+    </Suspense>
   );
 }

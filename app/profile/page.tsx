@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/db";
 
 import { Navigation } from "@/components/navigation";
 import { ProfileClient } from "./client-wrapper";
+import { ProfileSkeleton } from "@/components/loaders/profile-skeleton";
 
 export default async function ProfilePage() {
   const session = await getSession();
@@ -35,12 +37,14 @@ export default async function ProfilePage() {
   return (
     <>
       <Navigation />
-      <ProfileClient
-        stats={{
-          completedHarvests,
-          totalSaved: Number(totalSaved),
-        }}
-      />
+      <Suspense fallback={<ProfileSkeleton />}>
+        <ProfileClient
+          stats={{
+            completedHarvests,
+            totalSaved: Number(totalSaved),
+          }}
+        />
+      </Suspense>
     </>
   );
 }

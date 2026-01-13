@@ -54,6 +54,10 @@ model User {
   paymentMethods   PaymentMethod[]
   notifications    Notification[]
   auditLogs        AuditLog[]
+  basketOrders     BasketOrder[]
+  marketplaceOrders MarketplaceOrder[]
+  deliveries       Delivery[]
+
   
   @@index([email])
   @@index([phoneNumber])
@@ -264,6 +268,7 @@ model Basket {
   cancelledAt     DateTime?
   
   transactions    Transaction[]
+  basketOrders    BasketOrder[]
   
   @@index([userId])
   @@index([status])
@@ -277,6 +282,132 @@ enum BasketStatus {
   PAUSED
   CANCELLED
 }
+
+// ============================================
+// BASKET ORDERS
+// ============================================
+model BasketOrder {
+  id          String   @id @default(cuid())
+  basketId    String
+  userId      String
+  commodityId String
+  quantity    Int
+  status      String   @default("PENDING") // PENDING, FULFILLED, CANCELLED
+  requestedAt DateTime @default(now())
+  deliveredAt DateTime?
+
+  basket      Basket   @relation(fields: [basketId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commodity   Commodity @relation(fields: [commodityId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([basketId])
+  @@map("basket_orders")
+}
+
+
+// ============================================
+// COMMODITIES
+// ============================================
+model Commodity {
+  id          String   @id @default(cuid())
+  
+  // SKU & identity
+  sku         String   @unique
+  name        String
+  category    String   // "Rice", "Oil", "Beans"
+  brand       String?
+  price       Decimal  @db.Decimal(15, 2)
+  
+  // Attributes
+  unit        String   // "kg", "litre", "bag"
+  size        Decimal  @db.Decimal(10, 2) // 5, 10, 25 etc
+  image       String?
+  description String? @db.Text
+  
+  // Status
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  basketOrders          BasketOrder[]
+  marketplaceOrderItems MarketplaceOrderItem[]
+  
+  @@index([category])
+  @@index([sku])
+  @@map("commodities")
+}
+
+// ============================================
+// ORDERS
+// ============================================ 
+model MarketplaceOrder {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  status    String   @default("PENDING") // pending, fulfilled, cancelled
+  total     Decimal  @db.Decimal(15, 2)
+  deliveryLocation String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items     MarketplaceOrderItem[]
+  
+  @@index([userId])
+  @@index([status])
+  @@map("marketplace_orders")
+}
+
+// ============================================
+// ORDER ITEMS
+// ============================================ 
+model MarketplaceOrderItem {
+  id        String   @id @default(cuid())
+  
+  orderId     String
+  commodityId String
+  
+  quantity  Int
+  price     Decimal  @db.Decimal(15, 2)
+  
+  order     MarketplaceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  commodity Commodity        @relation(fields: [commodityId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([commodityId])
+  @@map("marketplace_order_items")
+}
+
+// ============================================
+// DELIVERIES
+// ============================================ 
+model Delivery {
+  id           String   @id @default(cuid())
+  userId       String
+  deliveryType String   // "BASKET", "MARKETPLACE"
+  orderId      String
+  status       String   @default("PENDING") // PENDING, IN_TRANSIT, DELIVERED, CANCELLED
+  address      String
+  courierInfo  Json?
+  requestedAt  DateTime @default(now())
+  dispatchedAt DateTime?
+  deliveredAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([deliveryType])
+  @@map("deliveries")
+}
+
 
 // ============================================
 // PAYMENT METHODS (For deposits into wallet)

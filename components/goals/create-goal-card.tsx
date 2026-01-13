@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -15,67 +17,53 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import axios from "axios";
-
-const commodities = [
-  { value: "rice", label: "Rice (50kg)", price: 45000, image: "/rice.jpg" },
-  { value: "beans", label: "Beans (100kg)", price: 85000, image: "/beans.jpg" },
-  {
-    value: "maize",
-    label: "Maize Seeds (10kg)",
-    price: 25000,
-    image: "/maize-seeds.jpg",
-  },
-  { value: "garri", label: "Garri (50kg)", price: 35000, image: "/garri.jpg" },
-  {
-    value: "yam",
-    label: "Yam Tubers (100kg)",
-    price: 55000,
-    image: "/yam-tubers.jpg",
-  },
-  {
-    value: "cassava",
-    label: "Cassava (100kg)",
-    price: 40000,
-    image: "/cassava-stems.jpg",
-  },
-];
+import { COMMODITIES } from "@/constants/commodities";
 
 interface CreateGoalCardProps {
   onGoalCreated?: () => void;
 }
 
+// Group commodities by category
+const groupedCommodities = COMMODITIES.reduce((acc, commodity) => {
+  if (!acc[commodity.category]) {
+    acc[commodity.category] = [];
+  }
+  acc[commodity.category].push(commodity);
+  return acc;
+}, {} as Record<string, typeof COMMODITIES>);
+
 export function CreateGoalCard({ onGoalCreated }: CreateGoalCardProps) {
-  const [selectedCommodity, setSelectedCommodity] = useState("");
+  const [selectedSKU, setSelectedSKU] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateGoal = async () => {
-    if (!selectedCommodity || !targetAmount || !targetDate) {
+    if (!selectedSKU || !targetAmount || !targetDate) {
       toast.error("Please fill in all fields");
       return;
     }
 
-    const commodity = commodities.find((c) => c.value === selectedCommodity);
+    const commodity = COMMODITIES.find((c) => c.sku === selectedSKU);
     if (!commodity) return;
 
     try {
       setIsLoading(true);
 
       await axios.post("/api/baskets", {
-        name: commodity.label,
-        commodityType: commodity.value,
+        name: `${commodity.name} (${commodity.size}${commodity.unit})`,
+        commodityType: commodity.sku,
         image: commodity.image,
         goalAmount: parseFloat(targetAmount),
         targetDate,
         regularTopUp: Math.round(parseFloat(targetAmount) / 10),
-        description: `Saving for ${commodity.label}`,
+        description: commodity.description,
       });
 
       toast.success("Goal created successfully!");
 
       // Reset form
-      setSelectedCommodity("");
+      setSelectedSKU("");
       setTargetAmount("");
       setTargetDate("");
 
@@ -91,9 +79,9 @@ export function CreateGoalCard({ onGoalCreated }: CreateGoalCardProps) {
     }
   };
 
-  const handleCommodityChange = (value: string) => {
-    setSelectedCommodity(value);
-    const commodity = commodities.find((c) => c.value === value);
+  const handleCommodityChange = (sku: string) => {
+    setSelectedSKU(sku);
+    const commodity = COMMODITIES.find((c) => c.sku === sku);
     if (commodity) {
       setTargetAmount(commodity.price.toString());
     }
@@ -113,18 +101,21 @@ export function CreateGoalCard({ onGoalCreated }: CreateGoalCardProps) {
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="commodity">Select Commodity</Label>
-          <Select
-            value={selectedCommodity}
-            onValueChange={handleCommodityChange}
-          >
+          <Select value={selectedSKU} onValueChange={handleCommodityChange}>
             <SelectTrigger id="commodity">
               <SelectValue placeholder="Choose a commodity" />
             </SelectTrigger>
-            <SelectContent>
-              {commodities.map((commodity) => (
-                <SelectItem key={commodity.value} value={commodity.value}>
-                  {commodity.label} - ₦{commodity.price.toLocaleString()}
-                </SelectItem>
+            <SelectContent className="max-h-[300px]">
+              {Object.entries(groupedCommodities).map(([category, items]) => (
+                <SelectGroup key={category}>
+                  <SelectLabel>{category}</SelectLabel>
+                  {items.map((commodity) => (
+                    <SelectItem key={commodity.sku} value={commodity.sku}>
+                      {commodity.name} ({commodity.size}
+                      {commodity.unit}) - ₦{commodity.price.toLocaleString()}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>
@@ -163,9 +154,7 @@ export function CreateGoalCard({ onGoalCreated }: CreateGoalCardProps) {
         <Button
           className="w-full mt-4"
           onClick={handleCreateGoal}
-          disabled={
-            isLoading || !selectedCommodity || !targetAmount || !targetDate
-          }
+          disabled={isLoading || !selectedSKU || !targetAmount || !targetDate}
         >
           {isLoading ? "Creating..." : "Create Goal"}
         </Button>

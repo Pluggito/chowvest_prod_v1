@@ -1,9 +1,11 @@
 "use server";
 
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { Navigation } from "@/components/navigation";
 import { DashboardClient } from "./client-wrapper";
 import { getSession } from "@/lib/auth";
+import { DashboardSkeleton } from "@/components/loaders/dashboard-skeleton";
 
 import prisma from "@/lib/db";
 
@@ -34,17 +36,21 @@ export default async function DashboardPage() {
   return (
     <>
       <Navigation />
-      <DashboardClient
-        walletBalance={Number(wallet?.balance || 0)}
-        totalSavings={totalSavings}
-        baskets={baskets.map((b) => ({
-          id: b.id,
-          name: b.name,
-          goalAmount: Number(b.goalAmount),
-          currentAmount: Number(b.currentAmount),
-          image: b.image,
-        }))}
-      />
+      <Suspense fallback={<DashboardSkeleton />}>
+        <DashboardClient
+          walletBalance={Number(wallet?.balance || 0)}
+          totalSavings={totalSavings}
+          baskets={baskets.map((b) => ({
+            id: b.id,
+            name: b.name,
+            goalAmount: Number(b.goalAmount),
+            currentAmount: Number(b.currentAmount),
+            image: b.image,
+            commodityType: b.commodityType,
+            category: b.category,
+          }))}
+        />
+      </Suspense>
     </>
   );
 }

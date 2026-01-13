@@ -12,6 +12,8 @@ interface Basket {
   goalAmount: number;
   currentAmount: number;
   image: string | null;
+  commodityType: string | null;
+  category: string;
 }
 
 interface DashboardClientProps {
