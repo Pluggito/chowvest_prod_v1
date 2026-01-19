@@ -11,12 +11,15 @@ import { toast } from "sonner";
 import axios from "axios";
 import { FullPageLoader } from "@/components/loaders/full-page-loader";
 
+import { useSession } from "@/components/providers/session-provider";
+
 interface SignInProps {
   onToggle: () => void;
 }
 
 export function SignIn({ onToggle }: SignInProps) {
   const router = useRouter();
+  const { refetch } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [email, setEmail] = useState("");
@@ -37,6 +40,7 @@ export function SignIn({ onToggle }: SignInProps) {
 
       toast.success("Welcome back!");
       setIsAuthenticating(true);
+      await refetch(); // Update session state immediately
       router.push("/dashboard");
       router.refresh();
     } catch (error: any) {

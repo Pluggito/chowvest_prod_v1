@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import axios from "axios";
 import { FullPageLoader } from "@/components/loaders/full-page-loader";
 
+import { useSession } from "@/components/providers/session-provider";
+
 interface SignUpProps {
   onToggle: () => void;
 }
@@ -24,6 +26,7 @@ export function SignUp({ onToggle }: SignUpProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const { refetch } = useSession();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +52,9 @@ export function SignUp({ onToggle }: SignUpProps) {
       toast.success("Account created successfully!");
       toast.success("Welcome to Chowvest!");
       setIsAuthenticating(true);
+
+      await refetch(); // Update session state immediately
+
       router.push("/dashboard");
       router.refresh();
     } catch (error: any) {

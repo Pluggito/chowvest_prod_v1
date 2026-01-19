@@ -6,13 +6,17 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import axios from "axios";
 
+import { useSession } from "@/components/providers/session-provider";
+
 export function SignOutButton() {
   const router = useRouter();
+  const { refetch } = useSession();
 
   const handleSignOut = async () => {
     try {
       await axios.post("/api/auth/logout");
       toast.success("Logged out successfully");
+      await refetch(); // Clear session state immediately
       router.push("/auth");
       router.refresh();
     } catch (error) {
