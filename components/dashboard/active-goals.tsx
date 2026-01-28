@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { COMMODITIES } from "@/constants/commodities";
+import { useRouter } from "next/navigation";
 
 interface Basket {
   name: string;
@@ -20,6 +21,8 @@ interface ActiveGoalsProps {
 }
 
 export function ActiveGoals({ baskets }: ActiveGoalsProps) {
+  const router = useRouter();
+
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -31,7 +34,11 @@ export function ActiveGoals({ baskets }: ActiveGoalsProps) {
             Track your progress toward your targets
           </p>
         </div>
-        <Button size="sm" className="gap-2">
+        <Button
+          onClick={() => router.push("/basket-goals")}
+          size="sm"
+          className="gap-2"
+        >
           <Plus className="w-4 h-4" />
           New Goal
         </Button>
