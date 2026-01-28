@@ -311,7 +311,7 @@ export const COMMODITIES = [
     price: 100000,
     unit: "kg",
     size: 50,
-    name: "Drum beans",
+    name: "Olotu beans",
     image: null,
     description: "Drum beans (Olotu - 1 bag)",
   },
@@ -322,9 +322,9 @@ export const COMMODITIES = [
     price: 50000,
     unit: "kg",
     size: 25,
-    name: "Drum beans",
+    name: "Olotu beans",
     image: null,
-    description: "Drum beans (Olotu - half bag)",
+    description: "Olotu beans (Olotu - half bag)",
   },
   {
     sku: "BEA-DRM-OLO-B0.25",
@@ -333,9 +333,9 @@ export const COMMODITIES = [
     price: 25000,
     unit: "kg",
     size: 12.5,
-    name: "Drum beans",
+    name: "Olotu beans",
     image: null,
-    description: "Drum beans (Olotu - quarter bag)",
+    description: "Olotu beans (Olotu - quarter bag)",
   },
 
   {
